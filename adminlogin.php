@@ -4,12 +4,6 @@ $link = createMysqliConnection();
 
 session_start();
 
-/* Usage 1:
-echo password_hash('Taitaja123!', PASSWORD_DEFAULT);
-// $2y$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-// For example:
-// $2y$10$.vGA1O9wmRjrwAVXD98HNOgsNpDczlqm3Jq7KnEd1rVAGv3Fykk1a
-*/
 
 if (isset($_SESSION['account_loggedin'])) {
     header('Location: admin.php');

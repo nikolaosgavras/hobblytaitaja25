@@ -10,6 +10,11 @@ if (!isset($_SESSION['account_loggedin'])) {
     exit;
 }
 
+if ($_SESSION['account_role'] !== 'staff') {
+    header('Location: userpanel.php');
+    exit;
+}
+
 
 mysqli_close($link);
 
@@ -21,45 +26,41 @@ mysqli_close($link);
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,minimum-scale=1">
         <title>Home</title>
-        <link href="style.css" rel="stylesheet" type="text/css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" href="styles.css">
     </head>
     <body>
-
-        <header class="header">
-
-            <div class="wrapper">
-
-                <h1>Website Title</h1>
-                
-                <nav class="menu">
-                    <a href="home.php">Home</a>
-                    <a href="profile.php">Profile</a>
-                    <a href="logout.php">
-                        <svg width="12" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></svg>
-                        Logout
-                    </a>
-                </nav>
-
-            </div>
-
-        </header>
-
-        <div class="content">
-
-            <div class="page-title">
-                <div class="wrap">
-                    <h2>Home</h2>
-                    <p>Welcome back, <?=htmlspecialchars($_SESSION['account_name'], ENT_QUOTES)?>!</p>
+        <div class="container mt-5">
+            <div class="col-6 mx-auto text-center">
+                    <h1>Admin panel tools</h1>
+                </div>
+            <div class="row align-items-center">
+                <div class="col-4">
+                    <h3>Add a new user</h3>
+                    <form action="accountcreation.php" method="post">
+                    <div class="mb-3">
+                        <label for="accountemail" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="accountemail" name="accountemail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountpassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="accountpassword" name="accountpassword">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label><br>
+                        <input type="radio" id="staff" name="accountrole" value="staff" required>
+                        <label for="staff">Staff</label><br>
+                        <input type="radio" id="user" name="accountrole" value="user">
+                        <label for="user">User</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
                 </div>
             </div>
-
-            <div class="block">
-
-                <p>This is the home page. You are logged in!</p>
-
-            </div>
-            
         </div>
 
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     </body>
 </html>
