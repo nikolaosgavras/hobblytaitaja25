@@ -35,7 +35,7 @@ if ($stmt = $link->prepare('SELECT paneladmin_id, password_hash FROM admins WHER
             $stmt->bind_param('sss', $_POST['accountemail'], $password, $_POST['accountrole']);
             $stmt->execute();
             // Output success message
-            echo 'You have successfully registered! You can now login!';
+            echo 'Account creation succesful';
         } else {
             // Something is wrong with the SQL statement, check to make sure the accounts table exists with all 3 fields
             echo 'Could not prepare statement!';
@@ -54,3 +54,17 @@ if ($stmt = $link->prepare('SELECT paneladmin_id, password_hash FROM admins WHER
 mysqli_close($link);
 
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account creation</title>
+</head>
+<body>
+    <h2>
+        <a href="admin.php">Click here to return to the admin panel</a>
+    </h2>
+</body>
+</html>
