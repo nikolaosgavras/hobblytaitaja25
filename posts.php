@@ -26,24 +26,24 @@ if ($stmt = $link->prepare('SELECT org_id FROM organizations WHERE org_id = ?'))
     
     if ($stmt->num_rows > 0) {
         $has_organization = true;
+    } else {
+        $has_organization = false;
+        header('Location: userpanel.php');
     }
     
     $stmt->close();
 }
 
-
-
-if ($stmt = $link->prepare('SELECT org_id FROM organizations WHERE org_id = ?')) {
+$posts = [];
+if ($stmt = $link->prepare('SELECT post_id, title FROM posts WHERE creator_id = ? ORDER BY post_id')) {
     $stmt->bind_param('i', $admin_id);
     $stmt->execute();
-    $stmt->store_result();
-    
-    if ($stmt->num_rows > 0) {
-        $has_organization = true;
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $posts[] = $row;
     }
     $stmt->close();
 }
-
 
 
 
@@ -102,79 +102,165 @@ mysqli_close($link);
                 </div>
             </div>
         </nav>
-        
-        <div class="container mt-5">
-            <div id="organizationFormContainer" style="display: none;">
-                <div class="row">
-                    <div class="col-6 mx-auto">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Organization Form</h5>
-                                <form method="post" action="createorg.php">
-                                    <input type="hidden" name="id" value='<?php echo htmlspecialchars($admin_id);?>'>
-                                    <div class="mb-3">
-                                        <label for="orgName" class="form-label">Organization Name</label>
-                                        <input type="text" class="form-control" id="orgName" name="orgName" placeholder="Enter organization name" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgEmail" class="form-label">Organization Email</label>
-                                        <input type="email" class="form-control" id="orgEmail" name="orgEmail" placeholder="Enter organization email" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgPhone" class="form-label">Organization phone number</label>
-                                        <input type="text" class="form-control" id="orgPhone" name="orgPhone" placeholder="Enter organization phone number" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgImg" class="form-label">Profile photo (optional)</label>
-                                        <input type="text" class="form-control" id="orgImg" name="orgImg" placeholder="Enter image url">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgDesc" class="form-label">Organization description (optional)</label>
-                                        <textarea class="form-control" name="orgDesc" id="orgDesc" rows="3" placeholder="Enter description here"></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgAddress" class="form-label">Address</label>
-                                        <input type="text" class="form-control" id="orgAddress" name="orgAddress" placeholder="Enter organization address" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgCity" class="form-label">City</label>
-                                        <input type="text" class="form-control" id="orgCity" name="orgCity" placeholder="Enter city here" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgPcode" class="form-label">Postcode</label>
-                                        <input type="text" class="form-control" id="orgPcode" name="orgPcode" placeholder="Enter postcode here" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgBid" class="form-label">Business ID/Y-tunnus (if applicable)</label>
-                                        <input type="text" class="form-control" id="orgBid" name="orgBid">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="orgType" class="form-label">Organization type</label>
-                                        <select class="form-select" id="orgType" name="orgType" required>
-                                            <option value="" selected disabled>Select type</option>
-                                            <option value="Association">Association</option>
-                                            <option value="Private">Private</option>
-                                            <option value="Limited company">Limited company</option>
-                                        </select>
-                                    </div>
 
-                                    <button type="submit" class="btn btn-primary" name="submitOrg">Submit</button>
-                                </form>
-                            </div>
+    <main>
+        <div class="container-fluid mt-5">
+            <div class="row">
+            <div class="col-lg-8 col-sm-12">
+                    <h3>Post list</h3>
+                    <div class="table-responsive">
+                        <table class="table table-light table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Post ID</th>
+                                    <th>Post Title</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($posts)): ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center">No posts found</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($posts as $post): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($post['post_id']); ?></td>
+                                            <td><?php echo htmlspecialchars($post['title']); ?></td>
+                                            <td>
+                                                <a href="editpost.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-warning">Edit</a>
+                                                <a href="deletepost.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-sm-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Create a new post</h5>
+                            <form method="post" action="createpost.php">
+                                <input type="hidden" name="creator_id" value='<?php echo htmlspecialchars($admin_id);?>'> <!-- admin id is "creator_id" in posts db -->
+                                <div class="mb-3">
+                                    <label for="postTitle" class="form-label">Title</label>
+                                    <input type="text" class="form-control" name="postTitle" placeholder="Enter a title for the post" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postDesc" class="form-label">Description</label>
+                                    <input type="text" class="form-control" name="postDesc" placeholder="Enter post description" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postLink" class="form-label">URL (optional)</label>
+                                    <input type="text" class="form-control" name="postLink" placeholder="Enter website link">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postImage" class="form-label">Post image (2 MB maximum)</label>
+                                    <input type="text" class="form-control" name="postImage" placeholder="ADD UPLOAD SYSTEM HERE!!! UNFINISHED">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postActivityType" class="form-label">Activity type</label>
+                                    <select class="form-select" name="postActivityType" required>
+                                        <option value="" selected disabled>Select type</option>
+                                        <option value="Activity">Activity</option>
+                                        <option value="Event">Event</option>
+                                        <option value="Hobby opportunity">Hobby opportunity</option>
+                                        <option value="Club">Club</option>
+                                        <option value="Competition">Competition</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postCategory" class="form-label">Category</label>
+                                    <select class="form-select" name="postCategory" required>
+                                        <option value="" selected disabled>Select category</option>
+                                        <option value="Sports and exercise">Sports and exercise</option>
+                                        <option value="Music and performing arts">Music and performing arts</option>
+                                        <option value="Crafts and arts">Crafts and arts</option>
+                                        <option value="Science and technology">Science and technology</option>
+                                        <option value="Games and eSports">Games and eSports</option>
+                                        <option value="Food and cooking">Food and cooking</option>
+                                        <option value="Nature and outdoor activities">Nature and outdoor activities</option>
+                                        <option value="Culture and history">Culture and history</option>
+                                        <option value="Community and volunteering">Community and volunteering</option>
+                                        <option value="Children and families">Children and families</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postTags" class="form-label">Tags</label>
+                                    <div class="mb-3">
+                                        <small class="text-muted">Select predefined tags:</small>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="predefinedTags">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Free of charge" id="tag1">
+                                                <label class="form-check-label" for="tag1">Free of charge</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Open to everyone" id="tag2">
+                                                <label class="form-check-label" for="tag2">Open to everyone</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Beginner-friendly" id="tag3">
+                                                <label class="form-check-label" for="tag3">Beginner-friendly</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Ongoing event" id="tag4">
+                                                <label class="form-check-label" for="tag4">Ongoing event</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Online" id="tag5">
+                                                <label class="form-check-label" for="tag5">Online</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Suitable for families" id="tag6">
+                                                <label class="form-check-label" for="tag6">Suitable for families</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Suitable for seniors" id="tag7">
+                                                <label class="form-check-label" for="tag7">Suitable for seniors</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Suitable for special groups" id="tag8">
+                                                <label class="form-check-label" for="tag8">Suitable for special groups</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Equipment available on-site" id="tag9">
+                                                <label class="form-check-label" for="tag9">Equipment available on-site</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="postTags[]" value="Requires pre-registration" id="tag10">
+                                                <label class="form-check-label" for="tag10">Requires pre-registration</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="customTags" class="form-label">Additional custom tags</label>
+                                        <input type="text" class="form-control" name="customTags" placeholder="Enter custom tags separated by commas">
+                                        <small class="form-text text-muted">Separate multiple tags with commas</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="postAddress" name="postAddress" placeholder="Enter address here" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postLatitude" class="form-label">Latitude</label>
+                                    <input type="number" step="any" class="form-control" id="postLatitude" name="postLatitude" placeholder="Enter latitude">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="postLongitude" class="form-label">Longitude</label>
+                                    <input type="number" step="any" class="form-control" id="postLongitude" name="postLongitude" placeholder="Enter longitude">
+                                </div>
+                                <button type="submit" class="btn btn-primary" name="submitPost">Submit</button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <script>
-            // Check if admin has organization and display form accordingly
-            var hasOrganization = <?php echo $has_organization ? 'true' : 'false'; ?>;
-            
-            if (!hasOrganization) {
-                document.getElementById('organizationFormContainer').style.display = 'block';
-            }
-        </script>
+    </main>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     </body>
 </html>

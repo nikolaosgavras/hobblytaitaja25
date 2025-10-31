@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Hobbly</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #2D5F3F;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #1D4F2F;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hobbly API Test Page</h1>
+    <p>This page tests the API endpoints to ensure they're working correctly with the posts database.</p>
+    
+    <div class="test-section">
+        <h2>Test 0: Simple API Test (Basic Connectivity)</h2>
+        <button onclick="testSimple()">Run Test</button>
+        <div id="test0-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 1: Fetch Posts (Alphabetical)</h2>
+        <button onclick="testFetchPosts()">Run Test</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Fetch Posts (Newest)</h2>
+        <button onclick="testFetchPostsNewest()">Run Test</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Search Posts</h2>
+        <input type="text" id="search-term" placeholder="Enter search term" value="free">
+        <button onclick="testSearch()">Run Test</button>
+        <div id="test3-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Fetch Single Post Detail</h2>
+        <input type="number" id="post-id" placeholder="Enter post ID" value="1">
+        <button onclick="testPostDetail()">Run Test</button>
+        <div id="test4-result"></div>
+    </div>
+
+    <script>
+        async function testSimple() {
+            const resultDiv = document.getElementById('test0-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch('api/test_simple.php');
+                const text = await response.text();
+                
+                try {
+                    const data = JSON.parse(text);
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Success - API is accessible!</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } catch (parseError) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ JSON Parse Error</h3>
+                            <p>Raw response:</p>
+                            <pre>${text}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testFetchPosts() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch('api/get_posts.php?offset=0&limit=5&sort=alphabetical');
+                const text = await response.text();
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(text);
+                    
+                    if (data.success) {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h3>✅ Success</h3>
+                                <p>Found ${data.count} posts</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h3>❌ Error</h3>
+                                <p>${data.error || 'Unknown error'}</p>
+                            </div>
+                        `;
+                    }
+                } catch (parseError) {
+                    // If JSON parsing fails, show the raw response
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ JSON Parse Error</h3>
+                            <p>Response is not valid JSON. Raw response:</p>
+                            <pre>${text}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testFetchPostsNewest() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch('api/get_posts.php?offset=0&limit=5&sort=newest');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Success</h3>
+                            <p>Found ${data.count} posts</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Error</h3>
+                            <p>${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testSearch() {
+            const resultDiv = document.getElementById('test3-result');
+            const searchTerm = document.getElementById('search-term').value;
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`api/get_posts.php?offset=0&limit=5&search=${encodeURIComponent(searchTerm)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Success</h3>
+                            <p>Found ${data.count} posts matching "${searchTerm}"</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Error</h3>
+                            <p>${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testPostDetail() {
+            const resultDiv = document.getElementById('test4-result');
+            const postId = document.getElementById('post-id').value;
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`api/get_post_detail.php?id=${postId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Success</h3>
+                            <p>Post details loaded</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Error</h3>
+                            <p>${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

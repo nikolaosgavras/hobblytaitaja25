@@ -16,7 +16,7 @@ function createMysqliConnection() {
     $link = mysqli_connect($server, $username, $password, $db);
     
     if ($link === false) {
-        die('Ei voitu yhdistää: ' . mysqli_connect_error());
+        throw new Exception('Database connection failed: ' . mysqli_connect_error());
     }
     
     // Set charset for proper Finnish character handling
