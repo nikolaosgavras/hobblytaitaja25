@@ -364,6 +364,12 @@ function renderAnnouncementDetail(post) {
                 ` : ''}
             </div>
         </div>
+
+        <!-- Modal Branding -->
+        <div class="modal-branding">
+            <img src="../images/logos/logo_primary@low-res.png" alt="Hobbly" class="modal-branding-logo">
+            <span class="modal-branding-text">Powered by Hobbly</span>
+        </div>
     `;
 }
 
