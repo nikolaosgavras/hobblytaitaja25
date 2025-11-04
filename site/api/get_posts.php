@@ -129,6 +129,8 @@ $query = "SELECT
     p.activity_type,
     p.category,
     p.address,
+    p.latitude,
+    p.longitude,
     o.name as org_name,
     o.email as org_email,
     o.phone as org_phone,
@@ -239,6 +241,8 @@ while ($row = mysqli_fetch_assoc($result)) {
         'activityType' => htmlspecialchars($row['activity_type'], ENT_QUOTES, 'UTF-8'),
         'category' => htmlspecialchars($row['category'], ENT_QUOTES, 'UTF-8'),
         'address' => htmlspecialchars($row['address'], ENT_QUOTES, 'UTF-8'),
+        'latitude' => $row['latitude'] ? (float)$row['latitude'] : null,
+        'longitude' => $row['longitude'] ? (float)$row['longitude'] : null,
         'organization' => [
             'name' => $row['org_name'] ? htmlspecialchars($row['org_name'], ENT_QUOTES, 'UTF-8') : null,
             'email' => $row['org_email'] ? htmlspecialchars($row['org_email'], ENT_QUOTES, 'UTF-8') : null,
