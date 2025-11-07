@@ -188,12 +188,29 @@ async function searchPosts() {
 }
 
 /**
+ * Check if an event has ended
+ */
+function isEventEnded(eventEndTimestamp) {
+    if (!eventEndTimestamp) return false; // If no end time, don't hide
+    
+    const now = Date.now() / 1000; // Current time in seconds
+    const eventEnd = eventEndTimestamp > 10000000000 ? eventEndTimestamp / 1000 : eventEndTimestamp;
+    
+    return eventEnd < now;
+}
+
+/**
  * Render posts to the DOM
  */
 function renderPosts(posts) {
     const fragment = document.createDocumentFragment();
+
+    
     
     posts.forEach(post => {
+        if (isEventEnded(post.event_end)) {
+            return;
+        }
         const card = createAnnouncementCard(post);
         fragment.appendChild(card);
     });
@@ -367,8 +384,7 @@ function renderAnnouncementDetail(post) {
 
         <!-- Modal Branding -->
         <div class="modal-branding">
-            <img src="../images/logos/logo_primary@low-res.png" alt="Hobbly" class="modal-branding-logo">
-            <span class="modal-branding-text">Powered by Hobbly</span>
+            <span class="modal-branding-text">Powered by <img src="../images/logos/logo_primary@low-res.png" alt="Hobbly" class="modal-branding-logo"></span>
         </div>
     `;
 }

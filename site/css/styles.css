@@ -80,6 +80,7 @@
     --header-height: 120px;
     --bottom-nav-height: 65px;
     --max-content-width: 600px;
+    --max-content-width-desktop: 1000px;
 }
 
 /* ==========================================================================
@@ -532,7 +533,7 @@ a {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: 10000;
     display: none;
     align-items: flex-end;
 }
@@ -584,10 +585,10 @@ a {
     position: sticky;
     top: 0;
     right: 0;
-    z-index: 2;
+    z-index: 10001;
     background-color: var(--color-background);
     border: none;
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -693,8 +694,8 @@ a {
 }
 
 .modal-branding-logo {
-    width: 24px;
-    height: 24px;
+    width: 50px;
+    height: 10px;
     object-fit: contain;
 }
 
@@ -709,7 +710,7 @@ a {
 
 .map {
     width: 100%;
-    height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+    height: calc(90vh - var(--header-height) - var(--bottom-nav-height));
     min-height: 400px;
     position: relative;
     border-radius: 12px;
@@ -727,6 +728,7 @@ a {
 .map-info-window {
     font-family: var(--font-family);
 }
+
 
 /* ==========================================================================
    Responsive Design
@@ -754,6 +756,13 @@ a {
     
     .modal-close {
         border-radius: 20px 20px 0 0;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1200px) {
+    .app-container {
+        max-width: var(--max-content-width-desktop);
     }
 }
 

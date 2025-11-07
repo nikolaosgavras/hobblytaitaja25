@@ -76,6 +76,8 @@ $query = "SELECT
     p.address,
     p.latitude,
     p.longitude,
+    p.event_start,
+    p.event_end,
     o.name as org_name,
     o.email as org_email,
     o.phone as org_phone
@@ -136,6 +138,8 @@ while ($row = mysqli_fetch_assoc($result)) {
         'address' => htmlspecialchars($row['address'], ENT_QUOTES, 'UTF-8'),
         'latitude' => (float)$row['latitude'],
         'longitude' => (float)$row['longitude'],
+        'event_start' => $row['event_start'] ? strtotime($row['event_start']) : null,
+        'event_end' => $row['event_end'] ? strtotime($row['event_end']) : null,
         'organization' => [
             'name' => $row['org_name'] ? htmlspecialchars($row['org_name'], ENT_QUOTES, 'UTF-8') : null,
             'email' => $row['org_email'] ? htmlspecialchars($row['org_email'], ENT_QUOTES, 'UTF-8') : null,

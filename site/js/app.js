@@ -155,12 +155,29 @@ async function loadPosts() {
 }
 
 /**
+ * Check if an event has ended
+ */
+function isEventEnded(eventEndTimestamp) {
+    if (!eventEndTimestamp) return false; // If no end time, don't hide
+    
+    const now = Date.now() / 1000; // Current time in seconds
+    const eventEnd = eventEndTimestamp > 10000000000 ? eventEndTimestamp / 1000 : eventEndTimestamp;
+    
+    return eventEnd < now;
+}
+
+/**
  * Render posts to the DOM
  */
 function renderPosts(posts) {
     const fragment = document.createDocumentFragment();
     
     posts.forEach(post => {
+        // Skip posts where the event has already ended
+        if (isEventEnded(post.event_end)) {
+            return;
+        }
+        
         const card = createAnnouncementCard(post);
         fragment.appendChild(card);
     });
@@ -268,7 +285,7 @@ function renderAnnouncementDetail(post) {
         
         <h2 id="modal-title" class="modal-detail-title">${escapeHtml(post.title)}</h2>
         
-        <p class="modal-detail-org">📍 ${escapeHtml(orgName)}</p>
+        <p class="modal-detail-org">🏢 ${escapeHtml(orgName)}</p>
         
         <div class="modal-detail-description">
             <p>${escapeHtml(post.description)}</p>
@@ -303,6 +320,20 @@ function renderAnnouncementDetail(post) {
                 <p><a href="${escapeHtml(post.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(post.url)}</a></p>
             </div>
         ` : ''}
+
+        ${post.event_start ? `
+            <div class="modal-detail-section">
+                <h3>Event Start</h3>
+                <p>${formatDateTime(post.event_start)}</p>
+            </div>
+        ` : ''}
+
+        ${post.event_end ? `
+            <div class="modal-detail-section">
+                <h3>Event End</h3>
+                <p>${formatDateTime(post.event_end)}</p>
+            </div>
+        ` : ''}
         
         <div class="modal-detail-section">
             <h3>Organization Contact</h3>
@@ -334,8 +365,7 @@ function renderAnnouncementDetail(post) {
 
         <!-- Modal Branding -->
         <div class="modal-branding">
-            <img src="../images/logos/logo_primary@low-res.png" alt="Hobbly" class="modal-branding-logo">
-            <span class="modal-branding-text">Powered by Hobbly</span>
+            <span class="modal-branding-text">Powered by <img src="../images/logos/logo_primary@low-res.png" alt="Hobbly" class="modal-branding-logo"></span>
         </div>
     `;
 }
@@ -405,6 +435,31 @@ function parseTagsString(tagsString) {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
         .slice(0, 5); // Limit to 5 tags for display
+}
+
+/**
+ * Format Unix timestamp to readable date and time
+ */
+function formatDateTime(timestamp) {
+    if (!timestamp) return '';
+    
+    // Convert to milliseconds - timestamp might be in seconds or milliseconds
+    const date = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return '';
+    
+    // Format: "November 6, 2025 at 14:30" (English words, Finnish 24h format)
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    };
+    
+    return date.toLocaleString('en-US', options);
 }
 
 /**

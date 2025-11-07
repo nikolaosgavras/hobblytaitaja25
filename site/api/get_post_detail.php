@@ -106,6 +106,8 @@ $query = "SELECT
     p.address,
     p.latitude,
     p.longitude,
+    p.event_start,
+    p.event_end,
     o.name as org_name,
     o.email as org_email,
     o.phone as org_phone,
@@ -182,6 +184,8 @@ echo json_encode([
         'address' => htmlspecialchars($post['address'], ENT_QUOTES, 'UTF-8'),
         'latitude' => $post['latitude'] ? (float)$post['latitude'] : null,
         'longitude' => $post['longitude'] ? (float)$post['longitude'] : null,
+        'event_start' => $post['event_start'] ? strtotime($post['event_start']) : null,
+        'event_end' => $post['event_end'] ? strtotime($post['event_end']) : null,
         'organization' => [
             'name' => $post['org_name'] ? htmlspecialchars($post['org_name'], ENT_QUOTES, 'UTF-8') : null,
             'email' => $post['org_email'] ? htmlspecialchars($post['org_email'], ENT_QUOTES, 'UTF-8') : null,

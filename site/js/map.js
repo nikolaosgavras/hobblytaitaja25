@@ -80,7 +80,7 @@ async function loadMapPosts() {
         
         if (data.success && data.posts && data.posts.length > 0) {
             createMarkers(data.posts);
-            showPostCount(data.count);
+            // Activity count on map is now handled inside createMarkers after filtering
         } else {
             console.log('No posts with location data found');
             showNoPostsMessage();
@@ -92,11 +92,25 @@ async function loadMapPosts() {
 }
 
 /**
+ * Check if an event has ended
+ */
+function isEventEnded(eventEndTimestamp) {
+    if (!eventEndTimestamp) return false; // If no end time, don't hide
+    
+    const now = Date.now() / 1000; // Current time in seconds
+    const eventEnd = eventEndTimestamp > 10000000000 ? eventEndTimestamp / 1000 : eventEndTimestamp;
+    
+    return eventEnd < now;
+}
+
+
+/**
  * Create markers for all posts with location data
  */
 async function createMarkers(posts) {
     console.log('Creating markers for', posts.length, 'posts');
     console.log('Posts data:', posts);
+    
     
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
     
@@ -106,6 +120,12 @@ async function createMarkers(posts) {
     
     posts.forEach((post, index) => {
         console.log(`Processing post ${index + 1}:`, post);
+        
+        // Skip posts where the event has already ended
+        if (isEventEnded(post.event_end)) {
+            console.log(`Skipping ended event: ${post.title}`);
+            return;
+        }
         
         // Validate coordinates
         if (!post.latitude || !post.longitude) {
@@ -152,8 +172,11 @@ async function createMarkers(posts) {
     
     console.log(`Total markers created: ${markers.length}`);
     
-    // Adjust map bounds to fit all markers
+    // Show count of active (non-ended) events
     if (markers.length > 0) {
+        showPostCount(markers.length);
+        
+        // Adjust map bounds to fit all markers
         const bounds = new google.maps.LatLngBounds();
         markers.forEach(marker => {
             bounds.extend(marker.position);
@@ -168,6 +191,9 @@ async function createMarkers(posts) {
         }
         
         console.log('Map bounds adjusted to fit markers');
+    } else {
+        // All events have ended
+        showNoPostsMessage();
     }
 }
 
