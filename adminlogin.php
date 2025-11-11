@@ -59,34 +59,41 @@ mysqli_close($link);
 
 ?>
 
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,minimum-scale=1">
-        <title>Login</title>
+        <title>Admin Login - Hobbly</title>
+        <link rel="icon" type="image/png" href="images/symbols/symbol_primary@low-res.png">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <link rel="stylesheet" href="styles.css">
     </head>
     <body>
-        <div class="container mt-5">
-            <div class="row align-items-center">
-                <div class="col-4 mx-auto">
-                <h1>Admin login</h1>
-
-                <br>
-
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">
+                    <img src="images/logos/logo_primary_1@high-res.png" alt="Hobbly Logo">
+                </div>
+                <h1><i class="bi bi-shield-lock"></i> Admin Login</h1>
                 <form method="post">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" id="username">
-                    
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" id="password">
-                </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="bi bi-person"></i> Username
+                        </label>
+                        <input type="text" class="form-control" name="username" id="username" placeholder="Enter your username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="bi bi-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </button>
                 </form>
+                <div class="login-footer">
+                    <p>Secure admin access for Hobbly platform</p>
                 </div>
             </div>
         </div>
