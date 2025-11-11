@@ -58,6 +58,8 @@ mysqli_close($link);
         <meta name="viewport" content="width=device-width,minimum-scale=1">
         <title>User panel</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <link rel="stylesheet" href="styles.css">
     </head>
     <body>
@@ -245,14 +247,20 @@ mysqli_close($link);
                                     <input type="text" class="form-control" id="postAddress" name="postAddress" placeholder="Enter address here" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="postLatitude" class="form-label">Latitude</label>
-                                    <input type="number" step="any" class="form-control" id="postLatitude" name="postLatitude" placeholder="Enter latitude">
+                                    <label class="form-label">Location</label>
+                                    <div id="locationMap" style="height: 400px; border-radius: 8px; margin-bottom: 10px;"></div>
+                                    <div id="selectedCoords" class="alert alert-info" style="display: none;">
+                                        <strong>Selected location:</strong><br>
+                                        Latitude: <span id="displayLat">-</span><br>
+                                        Longitude: <span id="displayLng">-</span>
+                                    </div>
+                                    <button type="button" class="btn btn-success" id="confirmLocation" style="display: none;">
+                                        <i class="bi bi-check-circle"></i> Confirm Location
+                                    </button>
+                                    <input type="hidden" id="postLatitude" name="postLatitude" required>
+                                    <input type="hidden" id="postLongitude" name="postLongitude" required>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="postLongitude" class="form-label">Longitude</label>
-                                    <input type="number" step="any" class="form-control" id="postLongitude" name="postLongitude" placeholder="Enter longitude">
-                                </div>
-                                <button type="submit" class="btn btn-primary" name="submitPost">Submit</button>
+                                <button type="submit" class="btn btn-primary" name="submitPost" id="submitPost">Submit</button>
                             </form>
                         </div>
                     </div>
@@ -262,5 +270,207 @@ mysqli_close($link);
     </main>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+            .leaflet-control-search {
+                background: white;
+                padding: 8px;
+                border-radius: 4px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            }
+            .leaflet-control-search input {
+                border: 1px solid #ccc;
+                padding: 6px 10px;
+                font-size: 14px;
+                border-radius: 4px;
+                width: 250px;
+            }
+            .leaflet-control-search input:focus {
+                outline: none;
+                border-color: #4CAF50;
+            }
+        </style>
+        <script>
+            // Initialize Leaflet map centered on Finland
+            let map;
+            let marker;
+            let selectedLat = null;
+            let selectedLng = null;
+
+            // Initialize map when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                // Center on Finland (approximately center of Finland)
+                map = L.map('locationMap').setView([64.0, 26.0], 5);
+
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Add custom search control to map
+                L.Control.Search = L.Control.extend({
+                    onAdd: function(map) {
+                        const container = L.DomUtil.create('div', 'leaflet-control-search leaflet-bar');
+                        const input = L.DomUtil.create('input', '', container);
+                        input.type = 'text';
+                        input.placeholder = 'Search location in Finland...';
+                        input.id = 'locationSearch';
+                        
+                        // Prevent map clicks when interacting with search box
+                        L.DomEvent.disableClickPropagation(container);
+                        L.DomEvent.disableScrollPropagation(container);
+                        
+                        return container;
+                    }
+                });
+
+                L.control.search = function(opts) {
+                    return new L.Control.Search(opts);
+                }
+
+                // Add search control to top right
+                L.control.search({ position: 'topright' }).addTo(map);
+
+                // Handle map clicks
+                map.on('click', function(e) {
+                    const lat = e.latlng.lat;
+                    const lng = e.latlng.lng;
+                    
+                    // Remove existing marker if any
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    
+                    // Add new marker
+                    marker = L.marker([lat, lng], {
+                        draggable: true
+                    }).addTo(map);
+                    
+                    // Update marker on drag
+                    marker.on('dragend', function(e) {
+                        const position = marker.getLatLng();
+                        updateSelectedLocation(position.lat, position.lng);
+                    });
+                    
+                    // Update selected location
+                    updateSelectedLocation(lat, lng);
+                });
+
+                // Location search functionality - attach after control is added
+                setTimeout(() => {
+                    const searchInput = document.getElementById('locationSearch');
+                    let searchTimeout;
+                    
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(searchTimeout);
+                        const query = this.value.trim();
+                        
+                        if (query.length < 3) return;
+                        
+                        searchTimeout = setTimeout(() => {
+                            searchLocation(query);
+                        }, 500);
+                    });
+                }, 100);
+
+                // Confirm location button
+                document.getElementById('confirmLocation').addEventListener('click', function() {
+                    if (selectedLat !== null && selectedLng !== null) {
+                        document.getElementById('postLatitude').value = selectedLat;
+                        document.getElementById('postLongitude').value = selectedLng;
+                        
+                        // Visual feedback
+                        this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Location Confirmed!';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-primary');
+                        
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Location';
+                            this.classList.remove('btn-primary');
+                            this.classList.add('btn-success');
+                        }, 2000);
+                    }
+                });
+
+                // Form validation - prevent submission without coordinates
+                const form = document.querySelector('form[action="createpost.php"]');
+                form.addEventListener('submit', function(e) {
+                    const latInput = document.getElementById('postLatitude');
+                    const lngInput = document.getElementById('postLongitude');
+                    
+                    if (!latInput.value || !lngInput.value) {
+                        e.preventDefault();
+                        alert('Please select and confirm a location on the map before submitting.');
+                        
+                        // Scroll to map
+                        document.getElementById('locationMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Highlight the location section
+                        const locationSection = document.getElementById('locationMap').parentElement;
+                        locationSection.style.border = '2px solid red';
+                        locationSection.style.borderRadius = '8px';
+                        locationSection.style.padding = '10px';
+                        
+                        setTimeout(() => {
+                            locationSection.style.border = '';
+                            locationSection.style.padding = '';
+                        }, 3000);
+                        
+                        return false;
+                    }
+                });
+            });
+
+            // Update selected location display
+            function updateSelectedLocation(lat, lng) {
+                selectedLat = lat;
+                selectedLng = lng;
+                
+                document.getElementById('displayLat').textContent = lat.toFixed(6);
+                document.getElementById('displayLng').textContent = lng.toFixed(6);
+                document.getElementById('selectedCoords').style.display = 'block';
+                document.getElementById('confirmLocation').style.display = 'inline-block';
+            }
+
+            // Search for location using Nominatim API
+            async function searchLocation(query) {
+                try {
+                    // Add Finland as country bias
+                    const searchQuery = encodeURIComponent(query + ', Finland');
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}&limit=1&countrycodes=fi`);
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        const lat = parseFloat(result.lat);
+                        const lng = parseFloat(result.lon);
+                        
+                        // Center map on result
+                        map.setView([lat, lng], 13);
+                        
+                        // Remove existing marker
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        
+                        // Add marker
+                        marker = L.marker([lat, lng], {
+                            draggable: true
+                        }).addTo(map);
+                        
+                        marker.on('dragend', function(e) {
+                            const position = marker.getLatLng();
+                            updateSelectedLocation(position.lat, position.lng);
+                        });
+                        
+                        // Update selected location
+                        updateSelectedLocation(lat, lng);
+                    }
+                } catch (error) {
+                    console.error('Error searching location:', error);
+                }
+            }
+        </script>
     </body>
 </html>

@@ -26,6 +26,16 @@ if ($stmt = $link->prepare('SELECT paneladmin_id, username, role FROM admins ORD
     $stmt->close();
 }
 
+$posts = [];
+if ($stmt = $link->prepare('SELECT post_id, title FROM posts ORDER BY post_id')) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $posts[] = $row;
+    }
+    $stmt->close();
+}
+
 mysqli_close($link);
 
 ?>
@@ -104,8 +114,126 @@ mysqli_close($link);
                         </table>
                     </div>
                 </div>
+                <div class="col-lg-12 col-sm-12 mt-5">
+                    <h3>Post list</h3>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" id="postSearch" class="form-control" placeholder="Search by ID or Title...">
+                        </div>
+                        <div class="col-md-6">
+                            <select id="postSort" class="form-select">
+                                <option value="">Sort by...</option>
+                                <option value="id-asc">ID (Ascending)</option>
+                                <option value="id-desc">ID (Descending)</option>
+                                <option value="title-asc">Title (A-Z)</option>
+                                <option value="title-desc">Title (Z-A)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-light table-hover" id="postsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Post ID</th>
+                                    <th>Post Title</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($posts)): ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center">No posts found</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($posts as $post): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($post['post_id']); ?></td>
+                                            <td><?php echo htmlspecialchars($post['title']); ?></td>
+                                            <td>
+                                                <a href="editpostadmin.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-warning">Edit</a>
+                                                <a href="deletepostadmin.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>
+        // Posts data from PHP
+        const postsData = <?php echo json_encode($posts); ?>;
+        let filteredPosts = [...postsData];
+
+        // Render posts table
+        function renderPostsTable(posts) {
+            const tbody = document.querySelector('#postsTable tbody');
+            if (posts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center">No posts found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = posts.map(post => `
+                <tr>
+                    <td>${escapeHtml(post.post_id)}</td>
+                    <td>${escapeHtml(post.title)}</td>
+                    <td>
+                        <a href="editpostadmin.php?id=${post.post_id}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="deletepostadmin.php?id=${post.post_id}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Search functionality
+        document.getElementById('postSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredPosts = postsData.filter(post => 
+                post.post_id.toString().includes(searchTerm) ||
+                post.title.toLowerCase().includes(searchTerm)
+            );
+            applySorting();
+        });
+
+        // Sort functionality
+        document.getElementById('postSort').addEventListener('change', function() {
+            applySorting();
+        });
+
+        function applySorting() {
+            const sortValue = document.getElementById('postSort').value;
+            let sorted = [...filteredPosts];
+            
+            switch(sortValue) {
+                case 'id-asc':
+                    sorted.sort((a, b) => parseInt(a.post_id) - parseInt(b.post_id));
+                    break;
+                case 'id-desc':
+                    sorted.sort((a, b) => parseInt(b.post_id) - parseInt(a.post_id));
+                    break;
+                case 'title-asc':
+                    sorted.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'title-desc':
+                    sorted.sort((a, b) => b.title.localeCompare(a.title));
+                    break;
+            }
+            
+            renderPostsTable(sorted);
+        }
+
+        // Initial render
+        renderPostsTable(postsData);
+    </script>
     </body>
 </html>
