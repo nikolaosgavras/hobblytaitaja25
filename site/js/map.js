@@ -201,10 +201,16 @@ async function createMarkers(posts) {
  * Show info window with post details when marker is clicked
  */
 function showInfoWindow(marker, post) {
+    // Fix image path - prepend ../ if image path doesn't start with http or data:
+    let imageUrl = post.image;
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+        imageUrl = '../' + imageUrl;
+    }
+    
     const contentString = `
         <div class="map-info-window" style="max-width: 300px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            ${post.image ? `
-                <img src="${post.image}" 
+            ${imageUrl ? `
+                <img src="${imageUrl}" 
                      alt="${post.title}" 
                      style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 12px;"
                      onerror="this.style.display='none'">

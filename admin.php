@@ -33,7 +33,7 @@ if ($stmt = $link->prepare('SELECT paneladmin_id, username, role FROM admins ORD
 }
 
 $posts = [];
-if ($stmt = $link->prepare('SELECT post_id, title FROM posts ORDER BY post_id')) {
+if ($stmt = $link->prepare('SELECT post_id, title, event_start, event_end FROM posts ORDER BY post_id')) {
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
@@ -216,13 +216,15 @@ mysqli_close($link);
                                     <tr>
                                         <th><i class="bi bi-hash"></i> Post ID</th>
                                         <th><i class="bi bi-card-text"></i> Post Title</th>
+                                        <th><i class="bi bi-calendar-check"></i> Start Time</th>
+                                        <th><i class="bi bi-calendar-x"></i> End Time</th>
                                         <th><i class="bi bi-gear"></i> Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($posts)): ?>
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted">
+                                            <td colspan="5" class="text-center text-muted">
                                                 <i class="bi bi-inbox"></i> No posts found
                                             </td>
                                         </tr>
@@ -231,6 +233,8 @@ mysqli_close($link);
                                             <tr>
                                                 <td><?php echo htmlspecialchars($post['post_id']); ?></td>
                                                 <td><?php echo htmlspecialchars($post['title']); ?></td>
+                                                <td><?php echo $post['event_start'] ? date('Y-m-d H:i', strtotime($post['event_start'])) : 'N/A'; ?></td>
+                                                <td><?php echo $post['event_end'] ? date('Y-m-d H:i', strtotime($post['event_end'])) : 'N/A'; ?></td>
                                                 <td>
                                                     <a href="editpostadmin.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-warning">
                                                         <i class="bi bi-pencil"></i> Edit
@@ -259,7 +263,7 @@ mysqli_close($link);
         function renderPostsTable(posts) {
             const tbody = document.querySelector('#postsTable tbody');
             if (posts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center">No posts found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No posts found</td></tr>';
                 return;
             }
             
@@ -267,12 +271,27 @@ mysqli_close($link);
                 <tr>
                     <td>${escapeHtml(post.post_id)}</td>
                     <td>${escapeHtml(post.title)}</td>
+                    <td>${formatDateTime(post.event_start)}</td>
+                    <td>${formatDateTime(post.event_end)}</td>
                     <td>
                         <a href="editpostadmin.php?id=${post.post_id}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="deletepostadmin.php?id=${post.post_id}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this post?')">Delete</a>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // Format datetime string
+        function formatDateTime(datetime) {
+            if (!datetime) return 'N/A';
+            const date = new Date(datetime);
+            return date.toLocaleString('fi-FI', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(',', '');
         }
 
         // Escape HTML to prevent XSS

@@ -195,7 +195,12 @@ function createAnnouncementCard(post) {
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', `View details for ${post.title}`);
     
-    const imageUrl = post.image || CONFIG.IMAGE_PLACEHOLDER;
+    // Fix image path - prepend ../ if image path doesn't start with http or data:
+    let imageUrl = post.image || CONFIG.IMAGE_PLACEHOLDER;
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+        imageUrl = '../' + imageUrl;
+    }
+    
     const orgName = post.organization?.name || 'Unknown Organization';
     
     // Parse tags
@@ -269,7 +274,12 @@ async function openAnnouncementDetail(postId) {
  * Render announcement detail in modal
  */
 function renderAnnouncementDetail(post) {
-    const imageUrl = post.image || CONFIG.IMAGE_PLACEHOLDER;
+    // Fix image path - prepend ../ if image path doesn't start with http or data:
+    let imageUrl = post.image || CONFIG.IMAGE_PLACEHOLDER;
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:')) {
+        imageUrl = '../' + imageUrl;
+    }
+    
     const orgName = post.organization?.name || 'Unknown Organization';
     const orgEmail = post.organization?.email || '';
     const orgPhone = post.organization?.phone || '';

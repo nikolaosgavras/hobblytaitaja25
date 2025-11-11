@@ -35,7 +35,7 @@ if ($stmt = $link->prepare('SELECT org_id FROM organizations WHERE org_id = ?'))
 }
 
 $posts = [];
-if ($stmt = $link->prepare('SELECT post_id, title FROM posts WHERE creator_id = ? ORDER BY post_id')) {
+if ($stmt = $link->prepare('SELECT post_id, title, event_start, event_end FROM posts WHERE creator_id = ? ORDER BY post_id')) {
     $stmt->bind_param('i', $admin_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -67,7 +67,7 @@ mysqli_close($link);
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
                 <a class="navbar-brand" href="userpanel.php">
-                    <img src="images/logos/logo_primary_1@high-res.png" alt="Hobbly Logo" class="navbar-logo">
+                    <img src="images/logos/green_logo@low-res.png" alt="Hobbly Logo" class="navbar-logo">
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -93,7 +93,7 @@ mysqli_close($link);
                                     <i class="bi bi-key"></i> Change Password
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#">
+                                <li><a class="dropdown-item" href="profilesettings.php">
                                     <i class="bi bi-person"></i> Profile Settings
                                 </a></li>
                             </ul>
@@ -141,13 +141,15 @@ mysqli_close($link);
                                     <tr>
                                         <th><i class="bi bi-hash"></i> ID</th>
                                         <th><i class="bi bi-card-text"></i> Title</th>
+                                        <th><i class="bi bi-calendar-check"></i> Start Time</th>
+                                        <th><i class="bi bi-calendar-x"></i> End Time</th>
                                         <th><i class="bi bi-gear"></i> Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($posts)): ?>
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted py-4">
+                                            <td colspan="5" class="text-center text-muted py-4">
                                                 <i class="bi bi-inbox" style="font-size: 2rem;"></i>
                                                 <p class="mt-2 mb-0">No posts found. Create your first post!</p>
                                             </td>
@@ -157,6 +159,8 @@ mysqli_close($link);
                                             <tr>
                                                 <td><?php echo htmlspecialchars($post['post_id']); ?></td>
                                                 <td><?php echo htmlspecialchars($post['title']); ?></td>
+                                                <td><?php echo $post['event_start'] ? date('Y-m-d H:i', strtotime($post['event_start'])) : 'N/A'; ?></td>
+                                                <td><?php echo $post['event_end'] ? date('Y-m-d H:i', strtotime($post['event_end'])) : 'N/A'; ?></td>
                                                 <td>
                                                     <a href="editpost.php?id=<?php echo $post['post_id']; ?>" class="btn btn-sm btn-warning">
                                                         <i class="bi bi-pencil"></i> Edit
@@ -180,7 +184,7 @@ mysqli_close($link);
                         <div class="section-header">
                             <h3><i class="bi bi-plus-circle"></i> Create New Post</h3>
                         </div>
-                            <form method="post" action="createpost.php">
+                            <form method="post" action="createpost.php" enctype="multipart/form-data">
                                 <input type="hidden" name="creator_id" value='<?php echo htmlspecialchars($admin_id);?>'> <!-- admin id is "creator_id" in posts db -->
                                 <div class="mb-3">
                                     <label for="postTitle" class="form-label">Title</label>
@@ -195,8 +199,12 @@ mysqli_close($link);
                                     <input type="text" class="form-control" name="postLink" placeholder="Enter website link">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="postImage" class="form-label">Post image (2 MB maximum)</label>
-                                    <input type="text" class="form-control" name="postImage" placeholder="ADD UPLOAD SYSTEM HERE!!! UNFINISHED">
+                                    <label for="postImage" class="form-label">Post Image (2 MB maximum)</label>
+                                    <input type="file" class="form-control" id="postImage" name="postImage" accept="image/*">
+                                    <small class="form-text text-muted">Accepted formats: JPG, PNG, GIF, WEBP (Max size: 2MB)</small>
+                                    <div id="imagePreview" class="mt-2" style="display: none;">
+                                        <img id="previewImg" src="" alt="Image preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 2px solid #ddd;">
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="postActivityType" class="form-label">Activity type</label>
@@ -281,6 +289,20 @@ mysqli_close($link);
                                 <div class="mb-3">
                                     <label for="postAddress" class="form-label">Address</label>
                                     <input type="text" class="form-control" id="postAddress" name="postAddress" placeholder="Enter address here" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="eventStart" class="form-label">
+                                            <i class="bi bi-calendar-check"></i> Event Start Time
+                                        </label>
+                                        <input type="datetime-local" class="form-control" id="eventStart" name="eventStart" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="eventEnd" class="form-label">
+                                            <i class="bi bi-calendar-x"></i> Event End Time
+                                        </label>
+                                        <input type="datetime-local" class="form-control" id="eventEnd" name="eventEnd" required>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Location</label>
@@ -507,6 +529,48 @@ mysqli_close($link);
                     console.error('Error searching location:', error);
                 }
             }
+
+            // Image preview functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const imageInput = document.getElementById('postImage');
+                const imagePreview = document.getElementById('imagePreview');
+                const previewImg = document.getElementById('previewImg');
+
+                if (imageInput) {
+                    imageInput.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        
+                        if (file) {
+                            // Check file size (2MB = 2097152 bytes)
+                            if (file.size > 2097152) {
+                                alert('File size exceeds 2MB. Please choose a smaller image.');
+                                imageInput.value = '';
+                                imagePreview.style.display = 'none';
+                                return;
+                            }
+
+                            // Check file type
+                            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                            if (!validTypes.includes(file.type)) {
+                                alert('Please select a valid image file (JPG, PNG, GIF, or WEBP).');
+                                imageInput.value = '';
+                                imagePreview.style.display = 'none';
+                                return;
+                            }
+
+                            // Show preview
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                previewImg.src = e.target.result;
+                                imagePreview.style.display = 'block';
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            imagePreview.style.display = 'none';
+                        }
+                    });
+                }
+            });
         </script>
     </body>
 </html>
