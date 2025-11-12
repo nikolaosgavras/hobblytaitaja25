@@ -1,6 +1,4 @@
-# Hobbly - Hobby & Activity Platformhttps://codeshack.io/secure-registration-system-php-mysql/
-
-https://codeshack.io/secure-login-system-php-mysql
+# Hobbly - Hobby & Activity Platform
 
 A mobile-first web application for displaying and managing hobby and activity announcements. Built for Taitaja 2025 competition with a focus on security, accessibility, and modern web standards.
 
