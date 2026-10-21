@@ -573,7 +573,7 @@ No results found
 
 **Project**: Hobbly - Taitaja 2025 Competition  
 **Module**: Module C - Mobile Web Application  
-**Developer**: [Your Name]  
+**Developer**: Nikolaos Gavras 
 **Year**: 2025
 
 ### Technologies Used
@@ -587,29 +587,3 @@ No results found
 - PHP Security: https://codeshack.io/secure-registration-system-php-mysql/
 - Google Maps API: https://developers.google.com/maps
 - WCAG Guidelines: https://www.w3.org/WAI/WCAG21/quickref/
-
-## 🤝 Contributing
-
-When contributing to this project:
-
-1. **Follow security best practices** - Always use prepared statements, validate input, escape output
-2. **Maintain accessibility** - Test with screen readers, keyboard navigation
-3. **Write semantic HTML** - Use proper HTML5 elements
-4. **Mobile-first design** - Start with 375px viewport
-5. **Document your code** - Clear comments and function documentation
-6. **Test thoroughly** - All browsers, different screen sizes, edge cases
-
-## 📞 Support
-
-For questions or issues:
-- Check this README first
-- Review the code comments in relevant files
-- Test with browser DevTools console
-- Check XAMPP error logs: `xampp/apache/logs/error.log`
-
----
-
-**Last Updated**: November 2025  
-**Status**: Production Ready for Taitaja 2025 Competition  
-**Security Score**: 95/100  
-**Accessibility Score**: 100/100
